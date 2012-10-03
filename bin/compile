@@ -30,10 +30,11 @@ pushd /app/local/libraries
 
 # download and extract ICU
 echo "+ Installing ICU..."
-curl -L "http://download.icu-project.org/files/icu4c/49.1.2/icu4c-${ICU_VERSION}src.tgz" -o - | tar xz
-pushd icu-${ICU}
+curl -L "http://download.icu-project.org/files/icu4c/${ICU_VERSION}/icu4c-49_1_2-src.tgz" -o - | tar xz
+mv icu icu-${ICU_VERSION}
+pushd icu-${ICU_VERSION}
 
-cd source/ && ./runConfigureICU Linux --enable-tests=no --enable-samples=no --exec-prefix=/app/local/libraries/icu-${ICU} --prefix=/app/local/libraries/icu-${ICU} && make install
+cd source/ && ./runConfigureICU Linux --enable-tests=no --enable-samples=no --exec-prefix=/app/local/libraries/icu-${ICU_VERSION} --prefix=/app/local/libraries/icu-${ICU_VERSION} && make install
 popd
 
 
