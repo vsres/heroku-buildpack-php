@@ -50,9 +50,14 @@ popd
 # download and extract phpredis
 echo "+ Installing phpredis..."
 # install phpredis from github
-git clone git://github.com/nicolasff/phpredis.git
-pushd phpredis
-git checkout ${PHPREDIS_VERSION}
+curl -L "https://github.com/nicolasff/phpredis/tarball/2.2.2" -o - | tar xz
+find . -name 'nicolas*' -exec mv {} phpredis-${PHPREDIS_VERSION} \; 2> /dev/null
+
+pushd phpredis-${PHPREDIS_VERSION}
+
+# git clone git://github.com/nicolasff/phpredis.git
+# pushd phpredis
+# git checkout ${PHPREDIS_VERSION}
 
 phpize
 ./configure
