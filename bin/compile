@@ -87,7 +87,7 @@ echo "+ Configuring PHP..."
 --with-gettext \
 --with-jpeg-dir \
 --with-mcrypt=${BUILD_DIR}/local/libmcrypt-$LIBMCRYPT_VERSION \
---with-apxs2=${BUILD_DIR}/local/apache \
+--with-apxs2=${BUILD_DIR}/local/apache/bin/apxs \
 --with-iconv \
 --with-mhash \
 --with-openssl \
