@@ -42,7 +42,7 @@ cd /app/local
 echo "ls in /app/local"
 ls -al
 
-cd ${BUILD_DIR}
+cd ${BUILD_DIR}/local
 echo "ls BUILD_DIR/local"
 ls -al
 
