@@ -29,7 +29,7 @@ LP_DIR=`cd $(dirname $0); cd ..; pwd`
 # include .files when moving things around
 shopt -s dotglob
 
-mkdir -p $BUILD_DIR $CACHE_DIR $BUILD_DIR/local
+mkdir -p $BUILD_DIR $CACHE_DIR $BUILD_DIR/local /app/local
 
 cd $BUILD_DIR
 
@@ -37,6 +37,9 @@ cd $BUILD_DIR
 # download and extract apache
 echo "+ Downloading and extracting apache..."
 curl -L $APACHE_S3URL -o - | tar xz -C ${BUILD_DIR}/local
+
+ls ${BUILD_DIR}/local
+
 # update path for apache
 export PATH=/app/local/apache/bin:$PATH
 
