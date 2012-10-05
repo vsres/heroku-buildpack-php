@@ -38,17 +38,18 @@ cd $BUILD_DIR
 echo "+ Downloading and extracting apache..."
 curl -L $APACHE_S3URL -o - | tar xz -C /app/local
 
-pushd /app/local
+cd /app/local
 echo "ls in /app/local"
 ls -al
 
-pushd ${BUILD_DIR}
+cd ${BUILD_DIR}
 echo "ls BUILD_DIR/local"
-ls ${BUILD_DIR}/local
+ls -al
 
 # update path for apache
 export PATH=/app/local/apache/bin:$PATH
 
+pushd $BUILD_DIR
 
 # download and extract libmcrypt
 echo "+ Downloading and extracting libmcrypt..."
