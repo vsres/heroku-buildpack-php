@@ -38,9 +38,13 @@ cd $BUILD_DIR
 echo "+ Downloading and extracting apache..."
 curl -L $APACHE_S3URL -o - | tar xz -C /app/local
 
-echo "here"
+pushd /app/local
+echo "ls in /app/local"
+ls -al
+
+pushd ${BUILD_DIR}
+echo "ls BUILD_DIR/local"
 ls ${BUILD_DIR}/local
-ls /app/local
 
 # update path for apache
 export PATH=/app/local/apache/bin:$PATH
