@@ -5,51 +5,60 @@
 set -e
 
 # config
-APACHE_VERSION="2.2.22"
+S3_BUCKET=plemi-heroku
+
+APACHE_VERSION="2.2.23"
 PHP_VERSION="5.4.7"
 LIBMCRYPT_VERSION="2.5.8"
-APC_VERSION="3.1.10"
-PHPREDIS_VERSION="2.2.2"
 ICU_VERSION="49.1.2"
 
+APC_VERSION="3.1.10"
+PHPREDIS_VERSION="2.2.2"
+INTL_VERSION="2.0.1"
+MONGO_VERSION="1.2.12"
+
+APACHE_S3URL="https://${S3_BUCKET}.s3.amazonaws.com/apache-${APACHE_VERSION}.tar.gz"
+LIBMCRYPT_S3URL="https://${S3_BUCKET}.s3.amazonaws.com/libmcrypt-${LIBMCRYPT_VERSION}.tar.gz"
+ICU_S3URL="https://${S3_BUCKET}.s3.amazonaws.com/icu-${ICU_VERSION}.tar.gz"
+COMPOSER_URL="http://getcomposer.org/composer.phar"
 
 BUILD_DIR=$1
 CACHE_DIR=$2
 LP_DIR=`cd $(dirname $0); cd ..; pwd`
 
-echo "$LP_DIR"
-
 # include .files when moving things around
 shopt -s dotglob
 
+mkdir -p $BUILD_DIR $CACHE_DIR $BUILD_DIR/local
+
 cd $BUILD_DIR
 
-mkdir -p /app/local/libraries
-pushd /app/local/libraries
 
-
-# download and extract ICU
-echo "+ Installing ICU..."
-curl -L "http://download.icu-project.org/files/icu4c/${ICU_VERSION}/icu4c-49_1_2-src.tgz" -o - | tar xz
-mv icu icu-${ICU_VERSION}
-pushd icu-${ICU_VERSION}
-
-cd source/ && ./runConfigureICU Linux --enable-tests=no --enable-samples=no --exec-prefix=/app/local/libraries/icu-${ICU_VERSION} --prefix=/app/local/libraries/icu-${ICU_VERSION} && make install
-popd
+# download and extract apache
+echo "+ Downloading and extracting apache..."
+curl -L $APACHE_S3URL -o - | tar xz -C /app/local
+# update path for apache
+export PATH=/app/local/apache/bin:$PATH
 
 
 # download and extract libmcrypt
-echo "+ Installing libmcrypt..."
-curl -L "http://downloads.sourceforge.net/project/mcrypt/Libmcrypt/${LIBMCRYPT_VERSION}/libmcrypt-${LIBMCRYPT_VERSION}.tar.bz2?r=&ts=1349104756&use_mirror=freefr" -o - | tar xj
-pushd libmcrypt-${LIBMCRYPT_VERSION}
-
-./configure --prefix=/app/local/libraries --disable-rpath --disable-posix-threads && make install
-popd
+echo "+ Downloading and extracting libmcrypt..."
+curl -L $LIBMCRYPT_S3URL -o - | tar xz -C /app/local
 
 
-cd ..
-echo "+ Installing PHP sources..."
-#fetch php, extract
+# download and extract icu
+echo "+ Downloading and extracting icu..."
+curl -L $ICU_S3URL -o - | tar xz -C /app/local
+
+
+# make a temp directory
+tempdir="$( mktemp -t php_XXXX )"
+rm -rf $tempdir
+mkdir -p $tempdir
+pushd $tempdir
+
+#fetch php, extract, install
+echo "+ Downloading and extracting PHP sources..."
 curl -L http://us.php.net/get/php-$PHP_VERSION.tar.bz2/from/www.php.net/mirror -o - | tar xj
 
 pushd php-$PHP_VERSION
@@ -57,9 +66,9 @@ pushd php-$PHP_VERSION
 echo "+ Configuring PHP..."
 # new configure command
 ./configure \
---prefix=/app/local/php \
---with-config-file-path=/app/local/php \
---with-config-file-scan-dir=/app/local/php/etc.d \
+--prefix=${BUILD_DIR}/local/php \
+--with-config-file-path=${BUILD_DIR}/local/php \
+--with-config-file-scan-dir=${BUILD_DIR}/local/php/etc.d \
 --disable-debug \
 --disable-rpath \
 --enable-fpm \
@@ -69,76 +78,93 @@ echo "+ Configuring PHP..."
 --enable-mbregex \
 --enable-mbstring \
 --enable-pcntl \
---enable-soap=shared \
+--enable-soap \
 --enable-zip \
+--without-pear \
 --with-bz2 \
 --with-curl \
 --with-gd \
 --with-gettext \
 --with-jpeg-dir \
---with-mcrypt=/app/local/libraries \
---with-icu-dir=/app/local/libraries/icu \
---with-intl \
+--with-mcrypt=${BUILD_DIR}/local/libmcrypt-$LIBMCRYPT_VERSION \
+--with-apxs2=${BUILD_DIR}/local/apache \
 --with-iconv \
 --with-mhash \
---with-mysql \
---with-mysqli \
 --with-openssl \
 --with-pcre-regex \
---with-pdo-mysql \
 --with-pgsql \
 --with-pdo-pgsql \
 --with-png-dir \
 --with-zlib
 
 echo "+ Compiling PHP..."
-# build & install it
 make install
+# update path for PHP
+export PATH=/app/local/php/bin:$PATH
 
-popd
+pushd $BUILD_DIR/local
 
-
-cd libraries
-# download and extract phpredis
-echo "+ Installing phpredis..."
-# install phpredis from github
-curl -L "https://github.com/nicolasff/phpredis/tarball/2.2.2" -o - | tar xz
-find . -name 'nicolas*' -exec mv {} phpredis-${PHPREDIS_VERSION} \; 2> /dev/null
-
-pushd phpredis-${PHPREDIS_VERSION}
-
-# git clone git://github.com/nicolasff/phpredis.git
-# pushd phpredis
-# git checkout ${PHPREDIS_VERSION}
-
-phpize
-./configure
-make && make install
-# add "extension=redis.so" to php.ini
-popd
-
-
-echo "+ Installing APC..."
-# install apc from source
+echo "+ Installing apc..."
+# download and install apc from source
 curl -L http://pecl.php.net/get/APC-${APC_VERSION}.tgz -o - | tar xz
 pushd APC-${APC_VERSION}
 # php apc jokers didn't update the version string in 3.1.10.
 sed -i 's/PHP_APC_VERSION "3.1.9"/PHP_APC_VERSION "3.1.10"/g' php_apc.h
 phpize
-./configure --enable-apc --enable-apc-filehits --with-php-config=/app/local/php/bin/php-config
+./configure --enable-apc --enable-apc-filehits
 make && make install
+
 popd
 
 
+echo "+ Installing phpredis..."
+# download and install phpredis from source
+curl -L "https://github.com/nicolasff/phpredis/tarball/2.2.2" -o - | tar xz
+find . -name 'nicolas*' -exec mv {} phpredis-${PHPREDIS_VERSION} \; 2> /dev/null
+
+pushd phpredis-${PHPREDIS_VERSION}
+
+phpize
+./configure
+make && make install
+
+popd
+
+
+echo "+ Installing intl..."
+# download and install apc from source
+curl -L http://pecl.php.net/get/intl-${INTL_VERSION}.tgz -o - | tar xz
+pushd intl-${INTL_VERSION}
+
+phpize
+./configure --enable-intl --with-icu-dir=$BUILD_DIR/local/icu-${ICU_VERSION}
+make && make install
+
+popd
+
+
+echo "+ Installing mongo..."
+# download and install apc from source
+curl -L http://pecl.php.net/get/mongo-${MONGO_VERSION}.tgz -o - | tar xz
+pushd mongo-${MONGO_VERSION}
+
+phpize
+./configure
+make && make install
+
+popd
+
+
+echo "+ Copying config files..."
 # update config files
-cp $LP_DIR/conf/httpd.conf apache/conf
-cp $LP_DIR/conf/php.ini php
+cp $LP_DIR/conf/httpd.conf ${BUILD_DIR}/local/apache/conf
+cp $LP_DIR/conf/php.ini ${BUILD_DIR}/local/php/php.ini
+cp -a $LP_DIR/conf/etc.d ${BUILD_DIR}/local/php/
 
-# make php and apache available on bin
-mkdir -p bin
-ln -s /app/local/php/bin/php bin/php
-ln -s /app/local/apache/bin/http bin/apache
+cd $BUILD_DIR
 
+
+echo "+ Creating boot script for Procfile..."
 if [ ! -f boot.sh ]; then
   cat > boot.sh <<EOF
 for var in \`env|cut -f1 -d=\`; do
@@ -148,8 +174,6 @@ touch /app/local/apache/logs/error_log
 touch /app/apache/logs/access_log
 tail -F /app/local/apache/logs/error_log &
 tail -F /app/local/apache/logs/access_log &
-export LD_LIBRARY_PATH=/app/local/php/ext
-export PHP_INI_SCAN_DIR=/app/local
 echo "Launching apache"
 exec /app/local/apache/bin/httpd -DNO_DETACH
 EOF
