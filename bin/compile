@@ -36,19 +36,19 @@ cd $BUILD_DIR
 
 # download and extract apache
 echo "+ Downloading and extracting apache..."
-curl -L $APACHE_S3URL -o - | tar xz -C /app/local
+curl -L $APACHE_S3URL -o - | tar xz -C ${BUILD_DIR}/local
 # update path for apache
 export PATH=/app/local/apache/bin:$PATH
 
 
 # download and extract libmcrypt
 echo "+ Downloading and extracting libmcrypt..."
-curl -L $LIBMCRYPT_S3URL -o - | tar xz -C /app/local
+curl -L $LIBMCRYPT_S3URL -o - | tar xz -C ${BUILD_DIR}/local
 
 
 # download and extract icu
 echo "+ Downloading and extracting icu..."
-curl -L $ICU_S3URL -o - | tar xz -C /app/local
+curl -L $ICU_S3URL -o - | tar xz -C ${BUILD_DIR}/local
 
 
 # make a temp directory
