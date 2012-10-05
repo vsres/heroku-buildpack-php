@@ -29,22 +29,14 @@ LP_DIR=`cd $(dirname $0); cd ..; pwd`
 # include .files when moving things around
 shopt -s dotglob
 
-mkdir -p $BUILD_DIR $CACHE_DIR $BUILD_DIR/local /app/local
+mkdir -p $BUILD_DIR $CACHE_DIR $BUILD_DIR/local
 
 cd $BUILD_DIR
 
 
 # download and extract apache
 echo "+ Downloading and extracting apache..."
-curl -L $APACHE_S3URL -o - | tar xz -C /app/local
-
-cd /app/local
-echo "ls in /app/local"
-ls -al
-
-cd ${BUILD_DIR}/local
-echo "ls BUILD_DIR/local"
-ls -al
+curl -L $APACHE_S3URL -o - | tar xz -C ${BUILD_DIR}/local
 
 # update path for apache
 export PATH=/app/local/apache/bin:$PATH
@@ -59,6 +51,14 @@ curl -L $LIBMCRYPT_S3URL -o - | tar xz -C ${BUILD_DIR}/local
 # download and extract icu
 echo "+ Downloading and extracting icu..."
 curl -L $ICU_S3URL -o - | tar xz -C ${BUILD_DIR}/local
+
+
+#
+cd ${BUILD_DIR}/local
+echo "ls BUILD_DIR/local"
+ls -al
+#
+
 
 
 # make a temp directory
