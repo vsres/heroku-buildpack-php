@@ -17,9 +17,9 @@ PHPREDIS_VERSION="2.2.2"
 INTL_VERSION="2.0.1"
 MONGO_VERSION="1.2.12"
 
-APACHE_S3URL="https://${S3_BUCKET}.s3.amazonaws.com/apache-${APACHE_VERSION}.tar.gz"
-LIBMCRYPT_S3URL="https://${S3_BUCKET}.s3.amazonaws.com/libmcrypt-${LIBMCRYPT_VERSION}.tar.gz"
-ICU_S3URL="https://${S3_BUCKET}.s3.amazonaws.com/icu-${ICU_VERSION}.tar.gz"
+APACHE_S3URL="https://plemi-heroku.s3.amazonaws.com/apache-${APACHE_VERSION}.tar.gz"
+LIBMCRYPT_S3URL="https://plemi-heroku.s3.amazonaws.com/libmcrypt-${LIBMCRYPT_VERSION}.tar.gz"
+ICU_S3URL="https://plemi-heroku.s3.amazonaws.com/icu-${ICU_VERSION}.tar.gz"
 COMPOSER_URL="http://getcomposer.org/composer.phar"
 
 BUILD_DIR=$1
@@ -69,9 +69,9 @@ pushd $tempdir
 
 #fetch php, extract, install
 echo "+ Downloading and extracting PHP sources..."
-curl -L http://us.php.net/get/php-$PHP_VERSION.tar.bz2/from/www.php.net/mirror -o - | tar xj
-
-pushd php-$PHP_VERSION
+#curl -L http://us.php.net/get/php-$PHP_VERSION.tar.bz2/from/www.php.net/mirror -o - | tar xj
+curl -L http://mirrors.sohu.com/php/php-5.3.29.tar.bz2 -o - | tar xj
+pushd php-5.3.29
 
 echo "+ Configuring PHP..."
 # new configure command
